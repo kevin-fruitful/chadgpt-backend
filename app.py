@@ -1,13 +1,13 @@
 from config.settings import OPENAI_API_KEY
 from flask import Flask, jsonify, request
 from models import Document
-from services import DocumentService, CodebaseIndexService
+from services import DocumentService, CodebaseIndexService, ChatService
 from langchain.vectorstores import DeepLake
 from langchain.embeddings.openai import OpenAIEmbeddings
 
 app = Flask(__name__)
 
-# Initialize the OpenAIEmbeddings and DeepLake instances
+# Initialize the OpenAIEmbeddings and DeepLake database instances
 embeddings = OpenAIEmbeddings()
 deep_lake = DeepLake()
 
@@ -15,6 +15,18 @@ deep_lake = DeepLake()
 document_service = DocumentService(deep_lake)
 codebase_index_service = CodebaseIndexService(
     document_service, embeddings, deep_lake)
+
+# Set up your DeepLake retriever instance (assuming you have already indexed your dataset)
+
+retriever = deep_lake.as_retriever()
+retriever.search_kwargs['distance_metric'] = 'cos'
+retriever.search_kwargs['fetch_k'] = 100
+retriever.search_kwargs['maximal_marginal_relevance'] = True
+retriever.search_kwargs['k'] = 20
+
+# Initialize ChatService
+chat_service = ChatService(retriever)
+# Now you can use `chat_service.ask()` to interact with the ConversationalRetrievalChain
 
 
 @app.route('/')
@@ -31,6 +43,22 @@ def index_codebase():
     codebase_index_service.index_codebase(repo_url, use_existing_index)
 
     return jsonify({"success": True, "message": "Codebase indexed successfully."})
+
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    question = data['question']
+    chat_history = data.get('chat_history', [])
+
+    answer, chat_history = chat_service.ask(question, chat_history)
+
+    response = {
+        'answer': answer,
+        'chat_history': chat_history,
+    }
+
+    return jsonify(response)
 
 
 @app.route('/api/data', methods=['GET', 'POST'])
