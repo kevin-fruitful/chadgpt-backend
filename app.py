@@ -1,5 +1,7 @@
 from config.settings import OPENAI_API_KEY
 from flask import Flask, jsonify, request
+from flask_cors import CORS
+import logging
 from models import Document
 from services import DocumentService, CodebaseIndexService, ChatService
 from langchain.vectorstores import DeepLake
@@ -7,9 +9,14 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 
 app = Flask(__name__)
 
+
+# Allow CORS for your frontend origin
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
 # Initialize the OpenAIEmbeddings and DeepLake database instances
 embeddings = OpenAIEmbeddings()
-deep_lake = DeepLake()
+deep_lake = DeepLake(dataset_path="mem://langchain",
+                     read_only=True, embedding_function=embeddings)
 
 # Initialize the DocumentService and CodebaseIndexService
 document_service = DocumentService(deep_lake)
@@ -28,13 +35,15 @@ retriever.search_kwargs['k'] = 20
 chat_service = ChatService(retriever)
 # Now you can use `chat_service.ask()` to interact with the ConversationalRetrievalChain
 
+logging.getLogger('flask_cors').level = logging.DEBUG
+
 
 @app.route('/')
 def hello():
     return 'Hello, World!'
 
 
-@app.route('/index_codebase', methods=['POST'])
+@app.route('/api/index_codebase', methods=['POST'])
 def index_codebase():
     data = request.json
     repo_url = data['repo_url']
@@ -45,7 +54,7 @@ def index_codebase():
     return jsonify({"success": True, "message": "Codebase indexed successfully."})
 
 
-@app.route('/chat', methods=['POST'])
+@app.route('/api/chat', methods=['POST'])
 def chat():
     data = request.get_json()
     question = data['question']
