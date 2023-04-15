@@ -1,0 +1,11 @@
+# .dockerignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.git
+.dockerignore
+.gitignore
+.env
+.hypothesis
+.venv
