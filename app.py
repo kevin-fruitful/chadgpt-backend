@@ -22,6 +22,8 @@ embeddings = OpenAIEmbeddings()
 # Embed and store the texts
 # Supplying a persist_directory will store the embeddings on disk
 persist_directory = 'db'
+if not os.path.exists(persist_directory):
+    os.makedirs(persist_directory)
 
 loader = TextLoader('./memory/hi.txt')
 documents = loader.load()
@@ -30,20 +32,14 @@ docs = text_splitter.split_documents(documents)
 
 seed_data = './memory'  # todo update this path
 
-# for dirpath, _, filenames in os.walk(seed_data):
-#     for file in filenames:
-#         try:
-#             loader = TextLoader(os.path.join(
-#                 dirpath, file), encoding='utf-8')
-#             docs.extend(loader.load_and_split())
-#         except Exception as e:
-#             pass
 
-# print(docs)
-vectordb = Chroma.from_documents(
-    documents=docs, embedding=embeddings, persist_directory=persist_directory)
-vectordb.persist()
-vectordb = None
+if os.path.exists(persist_directory):
+    vectordb = Chroma(persist_directory=persist_directory,
+                      embedding_function=embeddings)
+else:
+    vectordb = Chroma.from_documents(
+        documents=docs, embedding=embeddings, persist_directory=persist_directory)
+    vectordb.persist()
 
 # Now we can load the persisted database from disk, and use it as normal.
 vectordb = Chroma(persist_directory=persist_directory,
@@ -60,7 +56,7 @@ retriever = vectordb.as_retriever()
 retriever.search_kwargs['distance_metric'] = 'cos'
 retriever.search_kwargs['fetch_k'] = 100
 retriever.search_kwargs['maximal_marginal_relevance'] = True
-retriever.search_kwargs['k'] = 4
+retriever.search_kwargs['k'] = 14
 
 # Initialize ChatService
 chat_service = ChatService(retriever)
