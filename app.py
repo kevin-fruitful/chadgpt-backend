@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, requests
+from flask import Flask, jsonify, request
 from models import Document
 from services import DocumentService, CodebaseIndexService
 from langchain.vectorstores import DeepLake
@@ -23,7 +23,7 @@ def hello():
 
 @app.route('/index_codebase', methods=['POST'])
 def index_codebase():
-    data = requests.json
+    data = request.json
     repo_url = data['repo_url']
     use_existing_index = data.get('use_existing_index', False)
 
@@ -34,13 +34,13 @@ def index_codebase():
 
 @app.route('/api/data', methods=['GET', 'POST'])
 def api_data():
-    if requests.method == 'GET':
+    if request.method == 'GET':
         # You can return any data here. Replace the data variable with your data.
         data = {"key": "value"}
         return jsonify(data)
-    elif requests.method == 'POST':
+    elif request.method == 'POST':
         # You can access the POSTed data using request.json
-        received_data = requests.json
+        received_data = request.json
         # Process the received data and return a response
         return jsonify({"status": "success", "received_data": received_data})
 
