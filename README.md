@@ -26,10 +26,19 @@ Install the dependencies:
 pip install -r requirements.txt
 ```
 
-### Run the application:
+### Run the application
 
 ```zsh
 python app.py
 ```
 
 Now, the backend is running on `http://127.0.0.1:5000/`
+
+
+### Notes
+
+After installing dependencies, add them to `requirements.txt`
+
+```zsh
+pip freeze > requirements.txt
+```

@@ -78,5 +78,3 @@ def ask_questions(qa, questions, chat_history=None, max_line_width=80):
 questions = [
     "Give me a list of all of the methods in AdminFacet.",
 ] 
-
-ask_questions(qa, questions)
