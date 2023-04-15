@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, requests
 
 app = Flask(__name__)
 
@@ -10,13 +10,13 @@ def hello():
 
 @app.route('/api/data', methods=['GET', 'POST'])
 def api_data():
-    if request.method == 'GET':
+    if requests.method == 'GET':
         # You can return any data here. Replace the data variable with your data.
         data = {"key": "value"}
         return jsonify(data)
-    elif request.method == 'POST':
+    elif requests.method == 'POST':
         # You can access the POSTed data using request.json
-        received_data = request.json
+        received_data = requests.json
         # Process the received data and return a response
         return jsonify({"status": "success", "received_data": received_data})
 
