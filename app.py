@@ -8,10 +8,10 @@ from langchain.vectorstores import DeepLake
 from langchain.embeddings.openai import OpenAIEmbeddings
 
 app = Flask(__name__)
-
+# app.config["CORS_HEADERS"] = "Content-Type"
 
 # Allow CORS for your frontend origin
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, origins="*")
 
 # Initialize the OpenAIEmbeddings and DeepLake database instances
 embeddings = OpenAIEmbeddings()
@@ -46,7 +46,7 @@ def hello():
 @app.route('/api/index_codebase', methods=['POST'])
 def index_codebase():
     data = request.json
-    repo_url = data['repo_url']
+    repo_url = data['git_url']
     use_existing_index = data.get('use_existing_index', False)
 
     codebase_index_service.index_codebase(repo_url, use_existing_index)
@@ -84,4 +84,4 @@ def api_data():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8000)
