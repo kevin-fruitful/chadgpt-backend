@@ -4,6 +4,7 @@
 import os
 import json
 import subprocess
+import argparse
 
 DEAL_CLIENT = '0x99ec576ce2930BbE74b84739c27DCf28c2A370CC'
 
@@ -55,6 +56,17 @@ os.chdir(FILECOIN_PATH)
 #push_output = os.popen(text)
 push_output = subprocess.Popen(text, shell=True)
 
+
+parser = argparse.ArgumentParser(description="Filecoin car converter and uploader",
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-gc", "--generate_car_path", default=GENERATE_CAR_PATH)
+parser.add_argument("-f", "--file_path", default=FILE_PATH, help="file path for raw file to convert")
+parser.add_argument("-o", "--output_file_path", default=OUTPUT_FILE_PATH,help="output file path")
+parser.add_argument("-fevm", "--filecoin_evm_path", default=FILECOIN_PATH,help="path for the fevm-hardhat-kit")
+
+args = parser.parse_args()
+config = vars(args)
+print(config)
 
 """
 if os.path.isfile(OUTPUT_FILE_PATH):
