@@ -1,0 +1,14 @@
+{"Ipld":{"Name":"",
+    "Hash":"bafybeig2mn3n5wwtk6fbmaah55o6j22kt2yzytnnro5kyuzbpsq7qzcycu",
+    "Size":0,
+    "Link":[{"Name":".","Hash":"bafkreieq3rqlctcwocgkdoenphrylu5slmhf7dfhip7axzdvoea4nxzdsq","Size":266199,"Link":null}]},
+"DataCid":"bafybeig2mn3n5wwtk6fbmaah55o6j22kt2yzytnnro5kyuzbpsq7qzcycu",
+"PieceCid":"baga6ea4seaqoxiild5dgt7drsum2chdkya5v6o2tawhbe3ez5t54melyrfhtoki",
+"PieceSize":524288,
+"CidMap":{"":
+    {"IsDir":true,
+        "Cid":"bafybeig2mn3n5wwtk6fbmaah55o6j22kt2yzytnnro5kyuzbpsq7qzcycu"},
+    ".":{"IsDir":false,
+        "Cid":"bafkreieq3rqlctcwocgkdoenphrylu5slmhf7dfhip7axzdvoea4nxzdsq"}
+    }
+}
