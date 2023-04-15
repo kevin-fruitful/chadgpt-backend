@@ -36,8 +36,4 @@ class CodebaseIndexService:
                 chunk_size=1000, chunk_overlap=0)
             texts = text_splitter.split_documents(docs)
 
-            for idx, text in enumerate(texts):
-                vector = self.embeddings.embed(text)
-                document = Document(
-                    id=idx, title=f"Document {idx}", content=text, vector=vector)
-                self.document_service.store_document(document)
+            self.deep_lake.from_documents(texts, self.embeddings)
