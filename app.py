@@ -2,12 +2,13 @@ from config.settings import OPENAI_API_KEY
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import logging
-from models import Document
 from services import DocumentService, CodebaseIndexService, ChatService
-from langchain.vectorstores import DeepLake
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Pinecone
 import pinecone
+from langchain.vectorstores import Chroma
+import os
+from langchain.document_loaders import TextLoader
+from langchain.text_splitter import CharacterTextSplitter
 
 app = Flask(__name__)
 # app.config["CORS_HEADERS"] = "Content-Type"
@@ -15,31 +16,51 @@ app = Flask(__name__)
 # Allow CORS for your frontend origin
 CORS(app, origins="*")
 
-# Initialize Pinecone
-# pinecone.deinit()
-pinecone.init()
-
-
 # Initialize the OpenAIEmbeddings and DeepLake database instances
 embeddings = OpenAIEmbeddings()
 
+# Embed and store the texts
+# Supplying a persist_directory will store the embeddings on disk
+persist_directory = 'db'
+
+loader = TextLoader('./memory/hi.txt')
+documents = loader.load()
+text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+docs = text_splitter.split_documents(documents)
+
+seed_data = './memory'  # todo update this path
+
+# for dirpath, _, filenames in os.walk(seed_data):
+#     for file in filenames:
+#         try:
+#             loader = TextLoader(os.path.join(
+#                 dirpath, file), encoding='utf-8')
+#             docs.extend(loader.load_and_split())
+#         except Exception as e:
+#             pass
+
+# print(docs)
+vectordb = Chroma.from_documents(
+    documents=docs, embedding=embeddings, persist_directory=persist_directory)
+vectordb.persist()
+vectordb = None
+
+# Now we can load the persisted database from disk, and use it as normal.
+vectordb = Chroma(persist_directory=persist_directory,
+                  embedding_function=embeddings)
 
 # Initialize the DocumentService and CodebaseIndexService
-document_service = DocumentService(deep_lake)
-# Set up your Pinecone instance
-pinecone_vector_store = Pinecone(document_service,
-                                 namespace="langchain", embedding_function=embeddings, index_name="chad-gpt-ethTokyo")
-deep_lake = DeepLake(vectorstore=pinecone_vector_store, read_only=False,
-                     embedding_function=embeddings)
+document_service = DocumentService(vectordb)
+
 codebase_index_service = CodebaseIndexService(
-    document_service, embeddings, deep_lake)
+    document_service, embeddings, vectordb)
 
 
-retriever = deep_lake.as_retriever()
+retriever = vectordb.as_retriever()
 retriever.search_kwargs['distance_metric'] = 'cos'
 retriever.search_kwargs['fetch_k'] = 100
 retriever.search_kwargs['maximal_marginal_relevance'] = True
-retriever.search_kwargs['k'] = 20
+retriever.search_kwargs['k'] = 4
 
 # Initialize ChatService
 chat_service = ChatService(retriever)
@@ -58,7 +79,8 @@ def index_codebase():
     repo_url = data['git_url']
     use_existing_index = data.get('use_existing_index', False)
 
-    codebase_index_service.index_codebase(repo_url, use_existing_index)
+    codebase_index_service.index_codebase(
+        repo_url, use_existing_index)
 
     return jsonify({"success": True, "message": "Codebase indexed successfully."})
 
@@ -66,8 +88,7 @@ def index_codebase():
 @app.route('/api/chat', methods=['POST'])
 def chat():
 
-    # After initializing deep_lake, add the following line:
-    print("Dataset size:", len(deep_lake))
+    # After initializing vectordb, add the following line:
     data = request.json
     question = data['question']
     chat_history = data.get('chat_history', [])
@@ -80,11 +101,6 @@ def chat():
     }
 
     return jsonify(response)
-
-
-@app.teardown_appcontext
-def shutdown_pinecone(exception=None):
-    pinecone.deinit()
 
 
 if __name__ == '__main__':
