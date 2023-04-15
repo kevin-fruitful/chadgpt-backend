@@ -26,29 +26,16 @@ embeddings = OpenAIEmbeddings()
 # Initialize OpenAI wrapper
 llm = OpenAI(temperature=0.9)
 
-prompt = PromptTemplate(
-    input_variables=["product"],
-    template="What is a good name for a company that makes {product}?",
-)
-
-print(prompt.format(product="colorful socks"))
-
-chain = LLMChain(llm=llm, prompt=prompt)
-
-chain.run("colorful socks")
-
-llm = OpenAI(temperature=0)
-
 embeddings = OpenAIEmbeddings()
 
 root_dir = './clone-nayms'
 docs = []
 for dirpath, dirnames, filenames in os.walk(root_dir):
     for file in filenames:
-        try: 
+        try:
             loader = TextLoader(os.path.join(dirpath, file), encoding='utf-8')
             docs.extend(loader.load_and_split())
-        except Exception as e: 
+        except Exception as e:
             pass
 
 text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
@@ -63,7 +50,8 @@ retriever.search_kwargs['maximal_marginal_relevance'] = True
 retriever.search_kwargs['k'] = 20
 
 model = ChatOpenAI(temperature=0)
-qa = ConversationalRetrievalChain.from_llm(model,retriever=retriever)
+qa = ConversationalRetrievalChain.from_llm(model, retriever=retriever)
+
 
 def ask_questions(qa, questions, chat_history=None, max_line_width=80):
     if chat_history is None:
@@ -75,6 +63,7 @@ def ask_questions(qa, questions, chat_history=None, max_line_width=80):
         print(f"-> **Question**: {question}\n")
         print(f"**Answer**:\n{wrapped_answer}\n")
 
+
 questions = [
     "Give me a list of all of the methods in AdminFacet.",
-] 
+]
