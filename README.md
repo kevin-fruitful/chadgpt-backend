@@ -34,6 +34,14 @@ python app.py
 
 Now, the backend is running on `http://127.0.0.1:5000/`
 
+### Docker / DigitalOcean hosting
+
+Our backend is hosted at `http://64.226.69.24`
+
+```zsh
+docker run -d -p 80:5000 --name practical_mcclintock your-image-name
+```
+
 ### Notes
 
 After installing dependencies, add them to `requirements.txt`
