@@ -6,6 +6,8 @@ from models import Document
 from services import DocumentService, CodebaseIndexService, ChatService
 from langchain.vectorstores import DeepLake
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone
+import pinecone
 
 app = Flask(__name__)
 # app.config["CORS_HEADERS"] = "Content-Type"
@@ -13,17 +15,25 @@ app = Flask(__name__)
 # Allow CORS for your frontend origin
 CORS(app, origins="*")
 
+# Initialize Pinecone
+# pinecone.deinit()
+pinecone.init()
+
+
 # Initialize the OpenAIEmbeddings and DeepLake database instances
 embeddings = OpenAIEmbeddings()
-deep_lake = DeepLake(dataset_path="mem://langchain",
-                     read_only=True, embedding_function=embeddings)
+
 
 # Initialize the DocumentService and CodebaseIndexService
 document_service = DocumentService(deep_lake)
+# Set up your Pinecone instance
+pinecone_vector_store = Pinecone(document_service,
+                                 namespace="langchain", embedding_function=embeddings, index_name="chad-gpt-ethTokyo")
+deep_lake = DeepLake(vectorstore=pinecone_vector_store, read_only=False,
+                     embedding_function=embeddings)
 codebase_index_service = CodebaseIndexService(
     document_service, embeddings, deep_lake)
 
-# Set up your DeepLake retriever instance (assuming you have already indexed your dataset)
 
 retriever = deep_lake.as_retriever()
 retriever.search_kwargs['distance_metric'] = 'cos'
@@ -33,7 +43,6 @@ retriever.search_kwargs['k'] = 20
 
 # Initialize ChatService
 chat_service = ChatService(retriever)
-# Now you can use `chat_service.ask()` to interact with the ConversationalRetrievalChain
 
 logging.getLogger('flask_cors').level = logging.DEBUG
 
@@ -56,7 +65,10 @@ def index_codebase():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    data = request.get_json()
+
+    # After initializing deep_lake, add the following line:
+    print("Dataset size:", len(deep_lake))
+    data = request.json
     question = data['question']
     chat_history = data.get('chat_history', [])
 
@@ -70,17 +82,9 @@ def chat():
     return jsonify(response)
 
 
-@app.route('/api/data', methods=['GET', 'POST'])
-def api_data():
-    if request.method == 'GET':
-        # You can return any data here. Replace the data variable with your data.
-        data = {"key": "value"}
-        return jsonify(data)
-    elif request.method == 'POST':
-        # You can access the POSTed data using request.json
-        received_data = request.json
-        # Process the received data and return a response
-        return jsonify({"status": "success", "received_data": received_data})
+@app.teardown_appcontext
+def shutdown_pinecone(exception=None):
+    pinecone.deinit()
 
 
 if __name__ == '__main__':

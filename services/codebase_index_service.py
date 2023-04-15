@@ -36,4 +36,5 @@ class CodebaseIndexService:
                 chunk_size=1000, chunk_overlap=0)
             texts = text_splitter.split_documents(docs)
 
-            self.deep_lake.from_documents(texts, self.embeddings)
+            self.deep_lake.from_documents(
+                texts, self.embeddings, dataset_path="mem://langchain")
