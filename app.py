@@ -1,3 +1,4 @@
+from config.settings import OPENAI_API_KEY
 from flask import Flask, jsonify, request
 from models import Document
 from services import DocumentService, CodebaseIndexService

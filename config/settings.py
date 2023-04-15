@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Flask settings
 FLASK_CONFIG = os.getenv("FLASK_CONFIG", "config.default")
