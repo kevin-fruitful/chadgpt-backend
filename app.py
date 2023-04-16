@@ -4,11 +4,11 @@ from flask_cors import CORS
 import logging
 from services import DocumentService, CodebaseIndexService, ChatService
 from langchain.embeddings.openai import OpenAIEmbeddings
-import pinecone
 from langchain.vectorstores import Chroma
 import os
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
+from database import DatabaseHandler
 
 app = Flask(__name__)
 # app.config["CORS_HEADERS"] = "Content-Type"
@@ -17,42 +17,23 @@ app = Flask(__name__)
 CORS(app, origins="*")
 
 # Initialize the OpenAIEmbeddings and DeepLake database instances
-embeddings = OpenAIEmbeddings()
 
+embeddings2 = OpenAIEmbeddings()
 # Embed and store the texts
 # Supplying a persist_directory will store the embeddings on disk
-persist_directory = 'db'
-if not os.path.exists(persist_directory):
-    os.makedirs(persist_directory)
-
-loader = TextLoader('./memory/hi.txt')
-documents = loader.load()
-text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-docs = text_splitter.split_documents(documents)
 
 seed_data = './memory'  # todo update this path
 
 
-if os.path.exists(persist_directory):
-    vectordb = Chroma(persist_directory=persist_directory,
-                      embedding_function=embeddings)
-else:
-    vectordb = Chroma.from_documents(
-        documents=docs, embedding=embeddings, persist_directory=persist_directory)
-    vectordb.persist()
-
-# Now we can load the persisted database from disk, and use it as normal.
-vectordb = Chroma(persist_directory=persist_directory,
-                  embedding_function=embeddings)
+vectordb_instance = DatabaseHandler()
 
 # Initialize the DocumentService and CodebaseIndexService
-document_service = DocumentService(vectordb)
+document_service = DocumentService(vectordb_instance)
 
-codebase_index_service = CodebaseIndexService(
-    document_service, embeddings, vectordb)
+# codebase_index_service = CodebaseIndexService().index_codebase()
 
 
-retriever = vectordb.as_retriever()
+retriever = vectordb_instance.vectordb.as_retriever()
 retriever.search_kwargs['distance_metric'] = 'cos'
 retriever.search_kwargs['fetch_k'] = 100
 retriever.search_kwargs['maximal_marginal_relevance'] = True
@@ -75,9 +56,13 @@ def index_codebase():
     repo_url = data['git_url']
     use_existing_index = data.get('use_existing_index', False)
 
-    codebase_index_service.index_codebase(
+    texts = CodebaseIndexService().index_codebase(
         repo_url, use_existing_index)
+    # print(texts)
+    document_strings = [str(doc) for doc in texts]
 
+    vectordb_instance.vectordb.add_texts(document_strings)
+    print(1)
     return jsonify({"success": True, "message": "Codebase indexed successfully."})
 
 

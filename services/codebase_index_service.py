@@ -6,14 +6,10 @@ from langchain.text_splitter import CharacterTextSplitter
 from models import Document
 from services import DocumentService
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
+from database import DatabaseHandler
 
 
 class CodebaseIndexService:
-    def __init__(self, document_service: DocumentService, embeddings: OpenAIEmbeddings, vectordb: Chroma):
-        self.document_service = document_service
-        self.embeddings = embeddings
-        self.vectordb = vectordb
 
     def index_codebase(self, repo_url: str, use_existing_index: bool):
         if not use_existing_index:
@@ -36,17 +32,5 @@ class CodebaseIndexService:
                 chunk_size=1000, chunk_overlap=0)
             texts = text_splitter.split_documents(docs)
 
-            self.vectordb.from_documents(texts, self.embeddings)
-
-            # for text in texts:
-            #     title = os.path.basename(text[0])
-            #     content = text[1]
-            #     embedding = self.embeddings(content)
-            #     document = Document(
-            #         title=title, content=content, vector=embedding)
-            #     self.vectordb.add(document, embedding)
-
-            # for text in texts:
-            #     document = Document(text)
-            #     embedding = self.embeddings(text)
-            #     self.vectordb.add(document, embedding)
+            return texts
+            # vectordb_instance.vectordb.from_documents(texts, self.embeddings)

@@ -1,7 +1,6 @@
 # services/chat_service.py
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
-from langchain.vectorstores import DeepLake
 
 
 class ChatService:
