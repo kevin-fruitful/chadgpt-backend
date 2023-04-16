@@ -7,7 +7,7 @@ class ChatService:
     def __init__(self, retriever):
         # Create a ChatOpenAI instance
         # Adjust the temperature parameter as needed
-        self.model = ChatOpenAI(temperature=0)
+        self.model = ChatOpenAI(model='gpt-4', temperature=0)
 
         # Create a ConversationalRetrievalChain instance
         self.conversational_chain = ConversationalRetrievalChain.from_llm(
